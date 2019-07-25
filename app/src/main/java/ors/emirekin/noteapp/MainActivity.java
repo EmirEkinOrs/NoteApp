@@ -18,9 +18,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,20 +49,7 @@ public class MainActivity extends AppCompatActivity {
         noteList = findViewById(R.id.listView);
         listCheck();
 
-        arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, contentArray){
-
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-
-                View view = super.getView(position, convertView, parent);
-                TextView text = (TextView) view.findViewById(android.R.id.text1);
-
-                text.setTextColor(getResources().getColor(R.color.colorPurple));
-
-                return view;
-            }
-        };
-        noteList.setAdapter(arrayAdapter);
+        listItem(titleArray,printArray);
 
         noteList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -94,20 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 printArray.remove(position);
 
-                                arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, printArray){
-
-                                    @Override
-                                    public View getView(int position, View convertView, ViewGroup parent) {
-
-                                        View view = super.getView(position, convertView, parent);
-                                        TextView text = (TextView) view.findViewById(android.R.id.text1);
-
-                                        text.setTextColor(getResources().getColor(R.color.colorPurple));
-
-                                        return view;
-                                    }
-                                };
-                                noteList.setAdapter(arrayAdapter);
+                                listItem(titleArray,printArray);
                                 //getSupportActionBar().setTitle("All Notes");
                                 listCheck();
                             }
@@ -179,20 +158,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 getSupportActionBar().setTitle("All Notes");
                             }
-                            arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, printArray){
-
-                                @Override
-                                public View getView(int position, View convertView, ViewGroup parent) {
-
-                                    View view = super.getView(position, convertView, parent);
-                                    TextView text = (TextView) view.findViewById(android.R.id.text1);
-
-                                    text.setTextColor(getResources().getColor(R.color.colorPurple));
-
-                                    return view;
-                                }
-                            };
-                            noteList.setAdapter(arrayAdapter);
+                            listItem(titleArray,printArray);
                             return false;
                         }
                     });
@@ -213,6 +179,35 @@ public class MainActivity extends AppCompatActivity {
             image.setVisibility(View.VISIBLE);
             noteList.setVisibility(View.INVISIBLE);
         }
+    }
+
+    void listItem(ArrayList<String> arr1,ArrayList<String> arr2){
+
+        ListView resultsListView = (ListView) findViewById(R.id.listView);
+
+        HashMap<String, String> listContent = new HashMap<>();
+
+        for(int i=0;i < arr1.size();i++) {
+            listContent.put("\n" + arr2.get(i), arr1.get(i));
+        }
+
+        List<HashMap<String, String>> listItems = new ArrayList<>();
+        SimpleAdapter adapter = new SimpleAdapter(this, listItems, R.layout.list_item,
+                new String[]{"First Line", "Second Line"},
+                new int[]{R.id.text1, R.id.text2});
+
+
+        Iterator it = listContent.entrySet().iterator();
+        while (it.hasNext())
+        {
+            HashMap<String, String> resultsMap = new HashMap<>();
+            Map.Entry pair = (Map.Entry)it.next();
+            resultsMap.put("First Line", pair.getKey().toString());
+            resultsMap.put("Second Line", pair.getValue().toString());
+            listItems.add(resultsMap);
+        }
+
+        resultsListView.setAdapter(adapter);
     }
 
 }
