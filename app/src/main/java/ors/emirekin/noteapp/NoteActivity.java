@@ -22,6 +22,7 @@ public class NoteActivity extends AppCompatActivity {
     EditText noteContent;
     AutoCompleteTextView categoryText;
     Intent intent;
+    //DatabaseHelper myDb;
 
     ArrayList<String> titleShowArray = new ArrayList<>();
 
@@ -32,6 +33,10 @@ public class NoteActivity extends AppCompatActivity {
         getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#673AB7")));
         getSupportActionBar().setTitle("Add Note");
         setContentView(R.layout.activity_note);
+
+        //myDb = new DatabaseHelper(this);
+
+        MainActivity.flag++;
 
         intent = getIntent();
 
@@ -95,7 +100,12 @@ public class NoteActivity extends AppCompatActivity {
 
             if (position != -1) {
                 MainActivity.contentArray.set(position, noteContent.getText().toString());
-                MainActivity.printArray.set(position, noteContent.getText().toString());
+                try {
+                    MainActivity.printArray.set(position, noteContent.getText().toString());
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
                 MainActivity.titleArray.set(position, categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
             }else {
                 MainActivity.contentArray.add(noteContent.getText().toString());

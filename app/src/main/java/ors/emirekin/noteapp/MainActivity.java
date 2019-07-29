@@ -2,11 +2,13 @@ package ors.emirekin.noteapp;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,6 +27,8 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    DatabaseHelper myDb;
+
     static ArrayList<String> contentArray = new ArrayList<>();
     static ArrayList<String> titleArray = new ArrayList<>();
     static ArrayList<String> printArray = new ArrayList<>();
@@ -32,12 +36,38 @@ public class MainActivity extends AppCompatActivity {
     Intent intent;
     ListView noteList;
 
+    String tag = "KontrolNoktası";
+
+    static int flag = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#673AB7")));
         getSupportActionBar().setTitle("All Notes");
         setContentView(R.layout.activity_main);
+
+        myDb = new DatabaseHelper(this);
+
+        if(flag != 0) {
+            boolean isInserted = myDb.insertData();
+            if (isInserted)
+                Log.i(tag, "Başarılı");
+            else
+                Log.i(tag, "Başarısız");
+
+        }
+
+        Cursor res = myDb.getData();
+        if (res.getCount() == 0){
+            Log.i(tag,"Empty Database");
+        }else{
+            res.moveToFirst();
+            while(res.moveToNext()){
+                titleArray.add(res.getString(1));
+                contentArray.add(res.getString(2));
+            }
+        }
 
         intent = new Intent(getApplicationContext(),NoteActivity.class);
 
@@ -67,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
                                 int pos = position;
                                 for(int i = 0;i<contentArray.size();i++){
                                     if(printArray.get(position).equals(contentArray.get(i))) {
@@ -79,6 +108,12 @@ public class MainActivity extends AppCompatActivity {
                                 titleArray.remove(pos);
 
                                 printArray.remove(position);
+
+                                boolean isInserted = myDb.insertData();
+                                if (isInserted)
+                                    Log.i(tag, "Başarılı");
+                                else
+                                    Log.i(tag, "Başarısız");
 
                                 listItem(titleArray,printArray);
                                 listCheck();
@@ -229,31 +264,10 @@ public class MainActivity extends AppCompatActivity {
         listItem(titleArray,contentArray);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
