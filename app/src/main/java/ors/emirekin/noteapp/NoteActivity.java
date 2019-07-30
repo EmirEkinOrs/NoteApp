@@ -2,11 +2,13 @@ package ors.emirekin.noteapp;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,10 +24,13 @@ public class NoteActivity extends AppCompatActivity {
     EditText noteContent;
     AutoCompleteTextView categoryText;
     Intent intent;
-    //DatabaseHelper myDb;
+    DatabaseHelper myDb;
+
+    static String prevContent = null;
 
     ArrayList<String> titleShowArray = new ArrayList<>();
 
+    String tag = "kontrolnoktası";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,9 +39,7 @@ public class NoteActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("Add Note");
         setContentView(R.layout.activity_note);
 
-        //myDb = new DatabaseHelper(this);
-
-        MainActivity.flag++;
+        myDb = new DatabaseHelper(this);
 
         intent = getIntent();
 
@@ -94,6 +97,10 @@ public class NoteActivity extends AppCompatActivity {
 
         final int position = intent.getIntExtra("position",-1);
 
+
+        if(position != -1)
+            prevContent = MainActivity.contentArray.get(position);
+
         String s = "";
 
         if( !s.equals(categoryText.getText().toString())) {
@@ -107,10 +114,16 @@ public class NoteActivity extends AppCompatActivity {
                 }
 
                 MainActivity.titleArray.set(position, categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
+                MainActivity.printTitle.set(position, categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
+
+                updateData(position);
             }else {
                 MainActivity.contentArray.add(noteContent.getText().toString());
                 MainActivity.printArray.add(noteContent.getText().toString());
                 MainActivity.titleArray.add(categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
+                MainActivity.printTitle.add(categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
+                insertData();
+
             }
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
@@ -126,11 +139,14 @@ public class NoteActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             if (position != -1) {
                                 MainActivity.titleArray.set(position, "Default");
+                                MainActivity.printTitle.set(position, "Default");
                             }else {
                                 MainActivity.titleArray.add("Default");
+                                MainActivity.printTitle.add("Default");
                             }
                             MainActivity.contentArray.add(noteContent.getText().toString());
                             MainActivity.printArray.add(noteContent.getText().toString());
+                            insertData();
                             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                             startActivity(intent);
                         }
@@ -140,5 +156,53 @@ public class NoteActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    public void updateData(int position){
+        Log.i(tag,"updateData called.");
+        Log.i(tag,"[" + position + "] Title = " + MainActivity.titleArray.get(position) + " | Content = " + MainActivity.contentArray.get(position));
+        boolean isUpdate = myDb.updateData(position);
+        if(isUpdate)
+            Log.i(tag,"Update başarılı");
+        else
+            Log.i(tag,"Update başarısız");
+
+        showDatabase();
+        Log.i(tag,"----------------");
+    }
+
+    public void insertData(){
+        Log.i(tag,"insertData called.");
+        for(int i = 0;i < MainActivity.titleArray.size();i++){
+            Log.i(tag,"[" + i + "] Title = " + MainActivity.titleArray.get(i) + " | Content = " + MainActivity.contentArray.get(i));
+        }
+        boolean isInserted = myDb.insertData();
+        if (isInserted)
+            Log.i(tag, "InsertData Başarılı");
+        else
+            Log.i(tag, "InsertData Başarısız");
+
+        showDatabase();
+        Log.i(tag,"----------------");
+    }
+
+    public void showDatabase(){
+        Log.i(tag,"showDatabase called.");
+        Cursor res = myDb.getData();
+        if(res.getCount() == 0) {
+            // show message
+            Log.i(tag,"Nothing found. Database is empty.");
+            return;
+        }
+
+        StringBuffer buffer = new StringBuffer();
+        while (res.moveToNext()) {
+            buffer.append("Title :"+ res.getString(1)+"\n");
+            buffer.append("Content :"+ res.getString(2)+"\n\n");
+        }
+
+        // Show all data
+        Log.i(tag,"Database -- > \n" + buffer.toString());
+        Log.i(tag,"----------------");
     }
 }

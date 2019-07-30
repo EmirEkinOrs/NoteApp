@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     String tag = "KontrolNoktası";
 
-    static int flag = 0;
+    static int flag = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,27 +49,33 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("All Notes");
         setContentView(R.layout.activity_main);
 
+        Log.i(tag,"onCreate called.");
+        Log.i(tag,"----------------");
+
         myDb = new DatabaseHelper(this);
+        //myDb.deleteDatabase();
 
-        if(flag != 0) {
-            boolean isInserted = myDb.insertData();
-            if (isInserted)
-                Log.i(tag, "Başarılı");
-            else
-                Log.i(tag, "Başarısız");
-
-        }
-
-        Cursor res = myDb.getData();
-        if (res.getCount() == 0){
-            Log.i(tag,"Empty Database");
-        }else{
-            res.moveToFirst();
-            while(res.moveToNext()){
-                titleArray.add(res.getString(1));
-                contentArray.add(res.getString(2));
+        if(flag++ == 1) {
+            Cursor res = myDb.getData();
+            if (res.getCount() == 0) {
+                Log.i(tag, "Empty Database");
+                Log.i(tag,"----------------");
+            } else {
+                res.moveToFirst();
+                do{
+                    titleArray.add(res.getString(1));
+                    printTitle.add(res.getString(1));
+                    contentArray.add(res.getString(2));
+                    printArray.add(res.getString(2));
+                }while (res.moveToNext());
             }
         }
+
+        for(int i = 0;i < titleArray.size();i++){
+            Log.i(tag,"[" + Integer.toString(i) + "] Title = " + titleArray.get(i) + " | Content = " + contentArray.get(i));
+        }
+        Log.i(tag,"----------------");
+
 
         intent = new Intent(getApplicationContext(),NoteActivity.class);
 
@@ -80,16 +88,41 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 intent = new Intent(getApplicationContext(),NoteActivity.class);
-                intent.putExtra("position",position);
-                intent.putExtra("content", contentArray.get(position));
-                intent.putExtra("title", titleArray.get(position));
+                int pos = position;
+                String str1 = "";
+                String str2 = "";
+
+                for(int i = parent.getItemAtPosition(position).toString().length() - 2;i > 0;i--){
+                    if(parent.getItemAtPosition(position).toString().charAt(i) != '=')
+                        str1 += parent.getItemAtPosition(position).toString().charAt(i);
+                    else
+                        break;
+                }
+
+                for(int i = str1.length() - 2;i >= 0; i--){
+                    str2 += str1.charAt(i);
+                }
+
+                Log.i(tag,"Item --> " + str2);
+
+                for(int i = 0;i<contentArray.size();i++){
+                    Log.i(tag,"Equality Check --> " + str2 + " | " + contentArray.get(i));
+                    if(str2.equals(contentArray.get(i))) {
+                        Log.i(tag,str2 + " and " + contentArray.get(i) + " are equal!!!!");
+                        pos = i;
+                        break;
+                    }
+                }
+                intent.putExtra("position",pos);
+                intent.putExtra("content", contentArray.get(pos));
+                intent.putExtra("title", titleArray.get(pos));
                 startActivity(intent);
             }
         });
 
         noteList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+            public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, long id) {
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Are you sure?")
                         .setMessage("You are going to delete this note.")
@@ -98,24 +131,51 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 int pos = position;
+                               String str1 = "";
+                               String str2 = "";
+
+                                for(int i = parent.getItemAtPosition(position).toString().length() - 2;i > 0;i--){
+                                    if(parent.getItemAtPosition(position).toString().charAt(i) != '=')
+                                        str1 += parent.getItemAtPosition(position).toString().charAt(i);
+                                    else
+                                        break;
+                                }
+
+                                for(int i = str1.length() - 2;i >= 0; i--){
+                                    str2 += str1.charAt(i);
+                                }
+
+                                Log.i(tag,"Item --> " + str2);
+
                                 for(int i = 0;i<contentArray.size();i++){
-                                    if(printArray.get(position).equals(contentArray.get(i))) {
+                                    Log.i(tag,"Equality Check --> " + str2 + " | " + contentArray.get(i));
+                                    if(str2.equals(contentArray.get(i))) {
+                                        Log.i(tag,str2 + " and " + contentArray.get(i) + " are equal!!!!");
                                         pos = i;
                                         break;
                                     }
                                 }
+
+                                Log.i(tag,"----------------");
+
+                                deleteData(pos);
+
                                 contentArray.remove(pos);
                                 titleArray.remove(pos);
 
-                                printArray.remove(position);
+                                for(int i = 0;i<printArray.size();i++){
+                                    if(str2.equals(printArray.get(i))) {
+                                        pos = i;
+                                        break;
+                                    }
+                                }
 
-                                boolean isInserted = myDb.insertData();
-                                if (isInserted)
-                                    Log.i(tag, "Başarılı");
-                                else
-                                    Log.i(tag, "Başarısız");
+                                printArray.remove(pos);
+                                printTitle.remove(pos);
 
-                                listItem(titleArray,printArray);
+                                showDatabase();
+
+                                listItem(printTitle,printArray);
                                 listCheck();
                             }
                         })
@@ -264,10 +324,42 @@ public class MainActivity extends AppCompatActivity {
         listItem(titleArray,contentArray);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
+    public void deleteData(int position){
+        Log.i(tag,"deleteData called.");
+        Log.i(tag,"Position = " + Integer.toString(position));
+        for(int i = 0;i < titleArray.size();i++){
+            Log.i(tag,"[" + Integer.toString(i) + "] Title = " + titleArray.get(i) + " | Content = " + contentArray.get(i));
+        }
+        Log.i(tag,"----------------");
+        Integer deletedRows = myDb.deleteData(position);
+        if(deletedRows > 0)
+            Log.i(tag,"Data deleted.");
+        else
+            Log.i(tag,"Data not deleted.");
     }
 
+    public void showDatabase(){
+        Log.i(tag,"showDatabase called.");
+        Cursor res = myDb.getData();
+        if(res.getCount() == 0) {
+            // show message
+            Log.i(tag,"Nothing found. Database is empty.");
+            return;
+        }
+
+        StringBuffer buffer = new StringBuffer();
+        while (res.moveToNext()) {
+            buffer.append("Title :"+ res.getString(1)+"\n");
+            buffer.append("Content :"+ res.getString(2)+"\n\n");
+        }
+
+        // Show all data
+        Log.i(tag,"Database -- > \n" + buffer.toString());
+        Log.i(tag,"----------------");
+    }
+
+    @Override
+    public void onBackPressed() {
+
+    }
 }

@@ -7,7 +7,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/colorPurple"
-        android:textSize="21sp"
+        android:textSize="30sp"
         />
 
     <TextView
