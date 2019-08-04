@@ -55,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         myDb = new DatabaseHelper(this);
         //myDb.deleteDatabase();
 
+
+        //Sadece uygulama ilk açıldığında buraya girsin
         if(flag++ == 1) {
             Cursor res = myDb.getData();
             if (res.getCount() == 0) {
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 res.moveToFirst();
                 do{
+                    //Eğer database boş değilse bütün arraylistleri doldur
                     titleArray.add(res.getString(1));
                     printTitle.add(res.getString(1));
                     contentArray.add(res.getString(2));
@@ -360,6 +363,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-
+        //Nothing
     }
 }
