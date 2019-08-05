@@ -31,10 +31,10 @@ public class MainActivity extends AppCompatActivity {
 
     DatabaseHelper myDb;
 
-    static ArrayList<String> contentArray = new ArrayList<>();
-    static ArrayList<String> titleArray = new ArrayList<>();
-    static ArrayList<String> printArray = new ArrayList<>();
-    static ArrayList<String> printTitle = new ArrayList<>();
+    static ArrayList<String> contentArray = new ArrayList<>(); //Bütün notları tutuyor
+    static ArrayList<String> titleArray = new ArrayList<>(); //Bütün başlıkları tutuyor
+    static ArrayList<String> printArray = new ArrayList<>(); //Sadece printlenecek notları tutuyor
+    static ArrayList<String> printTitle = new ArrayList<>(); //Sadece printlenecek başlıkları tutuyor
     Intent intent;
     ListView noteList;
 
@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i(tag,"----------------");
 
         myDb = new DatabaseHelper(this);
-        //myDb.deleteDatabase();
 
 
         //Sadece uygulama ilk açıldığında buraya girsin
@@ -61,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
             Cursor res = myDb.getData();
             if (res.getCount() == 0) {
                 Log.i(tag, "Empty Database");
-                Log.i(tag,"----------------");
             } else {
                 res.moveToFirst();
                 do{
@@ -74,18 +72,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        for(int i = 0;i < titleArray.size();i++){
-            Log.i(tag,"[" + Integer.toString(i) + "] Title = " + titleArray.get(i) + " | Content = " + contentArray.get(i));
-        }
-        Log.i(tag,"----------------");
-
 
         intent = new Intent(getApplicationContext(),NoteActivity.class);
 
         noteList = findViewById(R.id.listView);
-        listCheck();
 
-        listItem(titleArray,contentArray);
+        listCheck(); // Eğer notlar yani contentArray boşsa "boş kutu resmini" göster, değilse notları göster.
+
+        listItem(titleArray,contentArray); // ListView'e bu iki arrayi gönderiyoruz.
 
         noteList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -96,26 +90,34 @@ public class MainActivity extends AppCompatActivity {
                 String str2 = "";
 
                 for(int i = parent.getItemAtPosition(position).toString().length() - 2;i > 0;i--){
+                    //List viewde title "Second Line=" şeklinde tutulurken content "First Line=" şeklinde tutuluyor
+                    //Böylece sondan geriye doğru test bir şekilde str1 i dolduruyoruz ta ki "=" işaretini görene kadar
+                    //Örnek: {Second Line=Kitap, First Line=Dostoyevski - Ecinniler}
                     if(parent.getItemAtPosition(position).toString().charAt(i) != '=')
                         str1 += parent.getItemAtPosition(position).toString().charAt(i);
-                    else
-                        break;
+                    else {
+                        if ((parent.getItemAtPosition(position).toString().charAt(i-1) == 'e') && (parent.getItemAtPosition(position).toString().charAt(i-2) == 'n')) //Her "=" işaretini breaklememesi için "Line" kelimesindeki 'e' ve 'n' yi de kontrol ettim
+                            break;
+                        else
+                            str1 += parent.getItemAtPosition(position).toString().charAt(i);
+                    }
                 }
 
+
+                //Burda ters olan str1 i str2 ye tekrardan ters bir şekilde atıyoruz, böylece content düzeliyor
                 for(int i = str1.length() - 2;i >= 0; i--){
                     str2 += str1.charAt(i);
                 }
 
-                Log.i(tag,"Item --> " + str2);
 
                 for(int i = 0;i<contentArray.size();i++){
-                    Log.i(tag,"Equality Check --> " + str2 + " | " + contentArray.get(i));
+                    //Her bir contenti istenilen(str2) contentle karşılaştırıyoruz ve bulduğumuzda pozisyonu "pos" a kaydediyoruz
                     if(str2.equals(contentArray.get(i))) {
-                        Log.i(tag,str2 + " and " + contentArray.get(i) + " are equal!!!!");
                         pos = i;
                         break;
                     }
                 }
+                //İstenilen pozisyonu ve o pozisyondaki content ile title ı NoteActivitye gönderiyoruz
                 intent.putExtra("position",pos);
                 intent.putExtra("content", contentArray.get(pos));
                 intent.putExtra("title", titleArray.get(pos));
@@ -140,8 +142,12 @@ public class MainActivity extends AppCompatActivity {
                                 for(int i = parent.getItemAtPosition(position).toString().length() - 2;i > 0;i--){
                                     if(parent.getItemAtPosition(position).toString().charAt(i) != '=')
                                         str1 += parent.getItemAtPosition(position).toString().charAt(i);
-                                    else
-                                        break;
+                                    else {
+                                        if ((parent.getItemAtPosition(position).toString().charAt(i-1) == 'e') && (parent.getItemAtPosition(position).toString().charAt(i-2) == 'n'))
+                                            break;
+                                        else
+                                            str1 += parent.getItemAtPosition(position).toString().charAt(i);
+                                    }
                                 }
 
                                 for(int i = str1.length() - 2;i >= 0; i--){
@@ -151,17 +157,13 @@ public class MainActivity extends AppCompatActivity {
                                 Log.i(tag,"Item --> " + str2);
 
                                 for(int i = 0;i<contentArray.size();i++){
-                                    Log.i(tag,"Equality Check --> " + str2 + " | " + contentArray.get(i));
                                     if(str2.equals(contentArray.get(i))) {
-                                        Log.i(tag,str2 + " and " + contentArray.get(i) + " are equal!!!!");
                                         pos = i;
                                         break;
                                     }
-                                }
+                                }//Buraya kadar onClickListener da ne yaptıysak aynı
 
-                                Log.i(tag,"----------------");
-
-                                deleteData(pos);
+                                deleteData(pos); //Databesen sildik
 
                                 contentArray.remove(pos);
                                 titleArray.remove(pos);
@@ -204,12 +206,12 @@ public class MainActivity extends AppCompatActivity {
         super.onOptionsItemSelected(item);
 
 
-        if(item.getItemId() == 2131165210) {
-            intent.putExtra("position", -1);
+        if(item.getItemId() == 2131165210) { // Eğer seçilen tuş not eklemeyse bu id ye sahip
+            intent.putExtra("position", -1); // Yeni bir not ekleneceği için gönderdiğimiz pozisyon -1
             intent.putExtra("content", "");
             intent.putExtra("title", "");
             startActivity(intent);
-        }else{
+        }else{ // Burası kategori seçimi
             this.findViewById(R.id.noteCategory).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -228,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if(flag != -1)
                             popupMenu.getMenu().add(Menu.NONE,i+1,i+1,titleArray.get(i));
-                    }
+                    } //Burda iki tane aynı title ın gösterilmesini engelledik
                     popupMenu.show();
 
                     popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -236,23 +238,24 @@ public class MainActivity extends AppCompatActivity {
                         public boolean onMenuItemClick(MenuItem item) {
                             printArray.clear();
                             printTitle.clear();
+                            //Printlenecek arrayleri tekrar doldurmak için boşalttık
                             if(item.getItemId() != 0) {
-                                String categoryChoose = titleArray.get(item.getItemId() - 1);
+                                String categoryChoose = titleArray.get(item.getItemId() - 1); //istediğim kategori
                                 for (int i = 0; i < titleArray.size(); i++) {
-                                    if (categoryChoose.equals(titleArray.get(i))) {
+                                    if (categoryChoose.equals(titleArray.get(i))) { //Sadece istediğim kategorideki notları göstermek için print arrayleri doldurduk
                                         printArray.add(contentArray.get(i));
                                         printTitle.add(titleArray.get(i));
                                     }
                                 }
                                 getSupportActionBar().setTitle(categoryChoose);
-                            }else{
+                            }else{ //Eğer id 0'a eşitse All Notes seçilmiş demektir. Bu yüzden contentArraydeki bütün notlar printArrayde de gösterilecek
                                 for (int i = 0; i < titleArray.size(); i++) {
                                         printArray.add(contentArray.get(i));
                                         printTitle.add(titleArray.get(i));
                                 }
                                 getSupportActionBar().setTitle("All Notes");
                             }
-                            listItem(printTitle,printArray);
+                            listItem(printTitle,printArray); //ListView e gönderilen arrayler
                             return false;
                         }
                     });
@@ -328,12 +331,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void deleteData(int position){
-        Log.i(tag,"deleteData called.");
-        Log.i(tag,"Position = " + Integer.toString(position));
-        for(int i = 0;i < titleArray.size();i++){
-            Log.i(tag,"[" + Integer.toString(i) + "] Title = " + titleArray.get(i) + " | Content = " + contentArray.get(i));
-        }
-        Log.i(tag,"----------------");
         Integer deletedRows = myDb.deleteData(position);
         if(deletedRows > 0)
             Log.i(tag,"Data deleted.");
@@ -342,10 +339,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showDatabase(){
-        Log.i(tag,"showDatabase called.");
         Cursor res = myDb.getData();
         if(res.getCount() == 0) {
-            // show message
             Log.i(tag,"Nothing found. Database is empty.");
             return;
         }

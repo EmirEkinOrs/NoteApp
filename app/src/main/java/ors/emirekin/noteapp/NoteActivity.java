@@ -68,7 +68,7 @@ public class NoteActivity extends AppCompatActivity {
             public void onClick(View v) {
                 categoryText.showDropDown();
             }
-        });
+        }); //Dokunulduğunda var olan bütün title ları göstersin
         categoryText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -80,7 +80,7 @@ public class NoteActivity extends AppCompatActivity {
         categoryText.setText(intent.getStringExtra("title"));
 
         noteContent = findViewById(R.id.noteContent);
-        noteContent.setText(intent.getStringExtra("content"));
+        noteContent.setText(intent.getStringExtra("content")); //Eğer contenti varsa o contenti yazsın
 
     }
 
@@ -98,12 +98,12 @@ public class NoteActivity extends AppCompatActivity {
         final int position = intent.getIntExtra("position",-1);
 
 
-        if(position != -1)
-            prevContent = MainActivity.contentArray.get(position);
+        if(position != -1) //Eğer yeni not eklenmiyorsa
+            prevContent = MainActivity.contentArray.get(position); //Yeni not eklenmediği için var olan bir not değiştiriliyor. Böylece değiştirilen notun pozisyonunu kaydettim
 
         String s = "";
 
-        if( !s.equals(categoryText.getText().toString())) {
+        if( !s.equals(categoryText.getText().toString())) { //Kategori girildi mi onu kontrol ediyor
 
             if (position != -1) {
                 MainActivity.contentArray.set(position, noteContent.getText().toString());
@@ -113,11 +113,12 @@ public class NoteActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
+                //Title ların baş harflerini büyük yaptım
                 MainActivity.titleArray.set(position, categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
                 MainActivity.printTitle.set(position, categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
 
                 updateData(position);
-            }else {
+            }else { //Yeni not ekleneceği için direk arrayin en sonuna ekledim
                 MainActivity.contentArray.add(noteContent.getText().toString());
                 MainActivity.printArray.add(noteContent.getText().toString());
                 MainActivity.titleArray.add(categoryText.getText().toString().substring(0,1).toUpperCase() + categoryText.getText().toString().substring(1));
@@ -128,7 +129,7 @@ public class NoteActivity extends AppCompatActivity {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
 
-        }else{
+        }else{ //Eğer kategori girilmediyse kullanıcıyı uyarıyor ve "Yes" işaretlenmesi halinde "Default" adlı bir title oluşturuyor
 
             new AlertDialog.Builder(NoteActivity.this)
                     .setTitle("You have not entered a category.")
@@ -159,8 +160,6 @@ public class NoteActivity extends AppCompatActivity {
     }
 
     public void updateData(int position){
-        Log.i(tag,"updateData called.");
-        Log.i(tag,"[" + position + "] Title = " + MainActivity.titleArray.get(position) + " | Content = " + MainActivity.contentArray.get(position));
         boolean isUpdate = myDb.updateData(position);
         if(isUpdate)
             Log.i(tag,"Update başarılı");
@@ -168,14 +167,9 @@ public class NoteActivity extends AppCompatActivity {
             Log.i(tag,"Update başarısız");
 
         showDatabase();
-        Log.i(tag,"----------------");
     }
 
     public void insertData(){
-        Log.i(tag,"insertData called.");
-        for(int i = 0;i < MainActivity.titleArray.size();i++){
-            Log.i(tag,"[" + i + "] Title = " + MainActivity.titleArray.get(i) + " | Content = " + MainActivity.contentArray.get(i));
-        }
         boolean isInserted = myDb.insertData();
         if (isInserted)
             Log.i(tag, "InsertData Başarılı");
@@ -183,11 +177,9 @@ public class NoteActivity extends AppCompatActivity {
             Log.i(tag, "InsertData Başarısız");
 
         showDatabase();
-        Log.i(tag,"----------------");
     }
 
     public void showDatabase(){
-        Log.i(tag,"showDatabase called.");
         Cursor res = myDb.getData();
         if(res.getCount() == 0) {
             // show message
